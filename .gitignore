@@ -1,0 +1,18 @@
+# Environment
+sourcing-skill/.env
+
+# Generated results
+sourcing-skill/results/*
+!sourcing-skill/results/.gitkeep
+
+# Temp files from skill runs
+sourcing-skill/submission.json
+sourcing-skill/apify_results_raw.json
+sourcing-skill/candidates.json
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

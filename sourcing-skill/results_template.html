@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results — {{JOB_TITLE}} @ {{COMPANY_NAME}}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+           background: #f5f5f5; color: #1a1a1a; padding: 32px 16px; }
+    .page { max-width: 1100px; margin: 0 auto; }
+    .header { background: #fff; border-radius: 10px; padding: 24px 28px;
+              box-shadow: 0 1px 6px rgba(0,0,0,.07); margin-bottom: 20px; }
+    .header h1 { font-size: 1.25rem; font-weight: 600; }
+    .meta { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px;
+            font-size: .83rem; color: #6b7280; }
+    .badge { background: #eef2ff; color: #4338ca; border-radius: 4px;
+             padding: 2px 8px; font-weight: 500; }
+    .error-banner { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+                    border-radius: 8px; padding: 14px 18px; margin-bottom: 16px;
+                    font-size: .9rem; }
+    .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+               background: #fff; border-radius: 10px; padding: 14px 20px;
+               box-shadow: 0 1px 6px rgba(0,0,0,.07); margin-bottom: 16px; }
+    .counter { font-size: .9rem; color: #6b7280; margin-right: auto; }
+    .counter strong { color: #1a1a1a; }
+    .btn { padding: 8px 18px; border-radius: 7px; border: none; font-size: .88rem;
+           font-weight: 500; cursor: pointer; transition: background .15s; }
+    .btn-ghost { background: #f3f4f6; color: #374151; }
+    .btn-ghost:hover { background: #e5e7eb; }
+    .btn-primary { background: #6366f1; color: #fff; }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-primary:disabled { background: #a5b4fc; cursor: not-allowed; }
+    .btn-outline { background: #fff; color: #6366f1; border: 1.5px solid #6366f1; }
+    .btn-outline:hover { background: #eef2ff; }
+    .btn-outline:disabled { opacity: .5; cursor: not-allowed; }
+    .save-status { font-size: .85rem; padding: 6px 12px; border-radius: 6px; display: none; }
+    .save-status.ok { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .save-status.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .table-wrap { background: #fff; border-radius: 10px;
+                  box-shadow: 0 1px 6px rgba(0,0,0,.07); overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    th { text-align: left; padding: 10px 14px; font-size: .78rem; font-weight: 600;
+         color: #6b7280; text-transform: uppercase; letter-spacing: .04em;
+         border-bottom: 1px solid #f0f0f0; background: #fafafa; white-space: nowrap; }
+    td { padding: 10px 14px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr.selected td { background: #f5f3ff; }
+    .source-badge { font-size: .75rem; padding: 2px 7px; border-radius: 4px;
+                    font-weight: 500; white-space: nowrap; }
+    .source-narrow { background: #dbeafe; color: #1e40af; }
+    .source-medium { background: #d1fae5; color: #065f46; }
+    .source-broad  { background: #fef9c3; color: #713f12; }
+    a { color: #6366f1; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .empty { text-align: center; padding: 60px 20px; color: #9ca3af; font-size: .95rem; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>{{JOB_TITLE}} <span style="font-weight:400;color:#6b7280">@ {{COMPANY_NAME}}</span></h1>
+    <div class="meta">
+      <span>Mandate: <strong>{{MANDATE_ID}}</strong></span>
+      <span class="badge">{{TIER_LABEL}}</span>
+      <span>{{CANDIDATE_COUNT}} candidates</span>
+      <span>{{TIMESTAMP}}</span>
+    </div>
+  </div>
+
+  {{ERROR_HTML}}
+
+  <div class="toolbar">
+    <span class="counter" id="counter">
+      <strong id="total-count">{{CANDIDATE_COUNT}}</strong> candidates —
+      <strong id="selected-count">0</strong> selected
+    </span>
+    <button class="btn btn-ghost" id="btn-select-all">Select All</button>
+    <button class="btn btn-ghost" id="btn-clear">Clear</button>
+    <button class="btn btn-outline" id="btn-save-selected" disabled>Save Selected to Airtable</button>
+    <button class="btn btn-primary" id="btn-save-all">Save All to Airtable</button>
+    <span class="save-status" id="save-status"></span>
+  </div>
+
+  <div class="table-wrap" id="table-wrap">
+    <div class="empty" id="empty-msg" style="display:none">No candidates found for this search.</div>
+    <table id="results-table">
+      <thead>
+        <tr>
+          <th style="width:36px"></th>
+          <th>Name</th>
+          <th>Current Title</th>
+          <th>Current Company</th>
+          <th>Location</th>
+          <th>Source</th>
+          <th>LinkedIn</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const CANDIDATES = {{CANDIDATES_JSON}};
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function safeLinkedInUrl(url) {
+  if (!url) return '';
+  try {
+    const u = new URL(url);
+    if (u.protocol === 'https:' && u.hostname.endsWith('linkedin.com')) return url;
+  } catch (_) {}
+  return '';
+}
+
+const tbody = document.getElementById('tbody');
+const selectedCountEl = document.getElementById('selected-count');
+const btnSaveSelected = document.getElementById('btn-save-selected');
+const saveStatus = document.getElementById('save-status');
+
+function sourceClass(src) {
+  if (!src) return '';
+  const s = src.toLowerCase();
+  if (s.includes('narrow')) return 'source-narrow';
+  if (s.includes('medium')) return 'source-medium';
+  return 'source-broad';
+}
+
+function renderTable() {
+  if (!CANDIDATES.length) {
+    document.getElementById('empty-msg').style.display = 'block';
+    document.getElementById('results-table').style.display = 'none';
+    return;
+  }
+  CANDIDATES.forEach((c, i) => {
+    const tr = document.createElement('tr');
+    tr.dataset.idx = i;
+    tr.innerHTML = `
+      <td><input type="checkbox" data-idx="${i}"></td>
+      <td>${escapeHtml(c.full_name)}</td>
+      <td>${escapeHtml(c.current_title)}</td>
+      <td>${escapeHtml(c.current_company)}</td>
+      <td>${escapeHtml(c.location)}</td>
+      <td><span class="source-badge ${sourceClass(c.source)}">${escapeHtml(c.source)}</span></td>
+      <td>${safeLinkedInUrl(c.linkedin_url) ? `<a href="${escapeHtml(c.linkedin_url)}" target="_blank">View →</a>` : ''}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  updateCounter();
+}
+
+function updateCounter() {
+  const checked = tbody.querySelectorAll('input[type=checkbox]:checked').length;
+  selectedCountEl.textContent = checked;
+  btnSaveSelected.disabled = checked === 0;
+  tbody.querySelectorAll('tr').forEach(tr => {
+    tr.classList.toggle('selected', tr.querySelector('input[type=checkbox]')?.checked ?? false);
+  });
+}
+
+tbody.addEventListener('change', updateCounter);
+
+document.getElementById('btn-select-all').addEventListener('click', () => {
+  tbody.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = true);
+  updateCounter();
+});
+
+document.getElementById('btn-clear').addEventListener('click', () => {
+  tbody.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
+  updateCounter();
+});
+
+async function saveToAirtable(candidates) {
+  saveStatus.style.display = 'none';
+  btnSaveSelected.disabled = true;
+  document.getElementById('btn-save-all').disabled = true;
+
+  try {
+    const res = await fetch('http://localhost:8765/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ candidates })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    saveStatus.className = data.errors?.length ? 'save-status err' : 'save-status ok';
+    if (data.errors?.length) {
+      saveStatus.textContent = `Saved ${data.saved}, ${data.errors.length} error(s): ${data.errors[0]}`;
+    } else {
+      saveStatus.textContent = `✓ Saved ${data.saved} candidate(s) to Airtable`;
+    }
+  } catch (err) {
+    saveStatus.className = 'save-status err';
+    saveStatus.textContent = `✗ Save failed: ${err.message}. Is server.py still running?`;
+  } finally {
+    saveStatus.style.display = 'inline-block';
+    btnSaveSelected.disabled = false;
+    document.getElementById('btn-save-all').disabled = false;
+    updateCounter();
+  }
+}
+
+document.getElementById('btn-save-selected').addEventListener('click', () => {
+  const idxs = [...tbody.querySelectorAll('input[type=checkbox]:checked')].map(cb => +cb.dataset.idx);
+  saveToAirtable(idxs.map(i => CANDIDATES[i]));
+});
+
+document.getElementById('btn-save-all').addEventListener('click', () => {
+  saveToAirtable(CANDIDATES);
+});
+
+renderTable();
+</script>
+</body>
+</html>
