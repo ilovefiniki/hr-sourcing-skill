@@ -28,15 +28,17 @@ Create `sourcing-skill/.env` with your API keys:
 
 ```env
 APIFY_API_KEY=your_apify_personal_api_token
+
+# Optional — only needed to save candidates to Airtable
 AIRTABLE_TOKEN=your_airtable_personal_access_token
 AIRTABLE_BASE_ID=appXXXXXXXXXX
 ```
 
-| Variable | Where to get it |
-|---|---|
-| `APIFY_API_KEY` | [Apify console](https://console.apify.com) → Settings → API & Integrations |
-| `AIRTABLE_TOKEN` | [Airtable](https://airtable.com) → Account → Developer hub → Personal access tokens |
-| `AIRTABLE_BASE_ID` | Your Airtable base URL: `airtable.com/appXXXXXXXXXX/...` |
+| Variable | Required | Where to get it |
+|---|---|---|
+| `APIFY_API_KEY` | Yes | [Apify console](https://console.apify.com) → Settings → API & Integrations |
+| `AIRTABLE_TOKEN` | Optional | [Airtable](https://airtable.com) → Account → Developer hub → Personal access tokens |
+| `AIRTABLE_BASE_ID` | Optional | Your Airtable base URL: `airtable.com/appXXXXXXXXXX/...` |
 
 ### 4. Run
 

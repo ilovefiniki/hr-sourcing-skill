@@ -15,13 +15,15 @@ python3 --version 2>/dev/null || echo "PYTHON_MISSING"
 If the output is `PYTHON_MISSING`, stop and tell the user:
 "Python 3 is required but not found. On Mac: open Terminal and run `xcode-select --install`, then try again. Or download from https://python.org."
 
-Read the file `sourcing-skill/.env` and load every non-comment line as an environment variable for this session. Then confirm the required keys are present:
+Read the file `sourcing-skill/.env` and load every non-comment line as an environment variable for this session. Then confirm the required key is present:
 
 ```bash
-grep -v '^#' sourcing-skill/.env | grep -E 'APIFY_API_KEY|AIRTABLE_TOKEN|AIRTABLE_BASE_ID' | grep -v '=$'
+grep -v '^#' sourcing-skill/.env | grep -E 'APIFY_API_KEY' | grep -v '=$'
 ```
 
-If any key is missing or empty, stop and tell the user: "Missing key in sourcing-skill/.env: [key name]. Please add it before running /sourcing."
+If `APIFY_API_KEY` is missing or empty, stop and tell the user: "Missing key in sourcing-skill/.env: APIFY_API_KEY. Please add it before running /sourcing."
+
+Airtable keys (`AIRTABLE_TOKEN`, `AIRTABLE_BASE_ID`) are optional — only needed if you want to save candidates to Airtable at the end. If they are absent, sourcing and results will work fine but the Save to Airtable button will return an error.
 
 ---
 
