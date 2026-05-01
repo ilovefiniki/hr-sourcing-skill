@@ -40,6 +40,23 @@ AIRTABLE_BASE_ID=appXXXXXXXXXX
 | `AIRTABLE_TOKEN` | Optional | [Airtable](https://airtable.com) → Account → Developer hub → Personal access tokens |
 | `AIRTABLE_BASE_ID` | Optional | Your Airtable base URL: `airtable.com/appXXXXXXXXXX/...` |
 
+#### Airtable table setup
+
+Create a table named **`Candidates`** with these fields:
+
+| Field name | Field type |
+|---|---|
+| Full Name | Single line text |
+| LI Profile | URL |
+| Location | Single line text |
+| Current Position | Single line text |
+| Current Company | Single line text |
+| Source | Single line text |
+| Mandate ID | Single line text |
+| Job Title (Mandate) | Single line text |
+| Company (Mandate) | Single line text |
+| Added Date | Date |
+
 ### 4. Run
 
 Open a Claude Code session in the project folder and type:
